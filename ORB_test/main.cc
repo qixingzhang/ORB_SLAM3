@@ -16,7 +16,7 @@ int main() {
     DMA dma(DMA_BASE);
     int threshold = 40;
 
-    for (int n = 0; n < 10; n++) {
+    for (int n = 0; n < 1; n++) {
         Mat image;
         image = imread("tum_480p.png", IMREAD_GRAYSCALE);
         // image = imread("000000.png", IMREAD_GRAYSCALE);
@@ -56,10 +56,10 @@ int main() {
 
             for (int i = 0; i < n_features; i++) {
                 unsigned x, y;
-                unsigned x_high = out_buffer.ptr[i*OUTPUT_BYTES + 35];
-                unsigned x_low = out_buffer.ptr[i*OUTPUT_BYTES + 34];
-                unsigned y_high = out_buffer.ptr[i*OUTPUT_BYTES + 33];
-                unsigned y_low = out_buffer.ptr[i*OUTPUT_BYTES + 32];
+                unsigned x_high = out_buffer.ptr[i*OUTPUT_BYTES + 36];
+                unsigned x_low = out_buffer.ptr[i*OUTPUT_BYTES + 35];
+                unsigned y_high = out_buffer.ptr[i*OUTPUT_BYTES + 34];
+                unsigned y_low = out_buffer.ptr[i*OUTPUT_BYTES + 33];
                 x = ((x_high << 8 & 0xFF00) | (x_low & 0x00FF));
                 y = ((y_high << 8 & 0xFF00) | (y_low & 0x00FF));
                 // printf("(%03d, %03d) ", x, y);
