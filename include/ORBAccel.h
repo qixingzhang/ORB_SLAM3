@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <opencv2/features2d/features2d.hpp>
 
 #ifndef _ORBACCEL_H_
 #define _ORBACCEL_H_
@@ -11,7 +12,7 @@
 #define ORB_HEIGHT_NEW  0x28
 #define ORB_WIDTH_NEW   0x30
 #define ORB_THRESHOLD   0x38
-#define OUTPUT_BYTES    36
+#define OUTPUT_BYTES    37
 #define MAX_OUTPUT_LENGTH 100000
 
 #define DMA_BASE    0xA0000000
@@ -29,6 +30,14 @@
 #define M_AXI_S2MM_DATA_WIDTH 128
 
 typedef unsigned char uchar;
+typedef struct tDescOut{
+    cv::KeyPoint kp;
+    uint8_t descriptor[32];
+} DescOut;
+
+static bool compareResponse(DescOut x, DescOut y) {
+    return x.kp.response > y.kp.response;
+}
 
 class Buffer {
     public:

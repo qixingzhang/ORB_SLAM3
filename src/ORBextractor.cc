@@ -58,10 +58,14 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <vector>
 #include <iostream>
+#include <algorithm>
 
 #include "ORBextractor.h"
-#include "ORBAccel.h"
 
+// #define _SOFTWARE_
+#ifndef _SOFTWARE_
+    #include "ORBAccel.h"
+#endif
 
 using namespace cv;
 using namespace std;
@@ -1183,13 +1187,16 @@ namespace ORB_SLAM3
         // Pre-compute the scale pyramid
         // ComputePyramid(image);
 
-        vector<vector<KeyPoint>> allKeypoints;
-        allKeypoints.resize(nlevels);
+        // vector<vector<KeyPoint>> allKeypoints;
+        // allKeypoints.resize(nlevels);
 
-        vector<vector<uint8_t>> allDescriptors;
-        allDescriptors.resize(nlevels);
+        // vector<vector<uint8_t>> allDescriptors;
+        // allDescriptors.resize(nlevels);
 
-        Mat descriptors;
+        vector<vector<DescOut>> allOutputs;
+        allOutputs.resize(nlevels);
+
+        // Mat descriptors;
         int nkeypoints = 0;
         _keypoints.clear();
 
@@ -1197,13 +1204,13 @@ namespace ORB_SLAM3
         int monoIndex = 0, stereoIndex = nkeypoints-1;
 
         Buffer inBuffer(image.cols * image.rows);
-        cout << "init input Buffer" << endl;
+        // cout << "init input Buffer" << endl;
         Buffer outBuffer(MAX_OUTPUT_LENGTH*OUTPUT_BYTES);
-        cout << "init output Buffer" << endl;
+        // cout << "init output Buffer" << endl;
         MMIO kernel(ORB_BASE);
-        cout << "init kernel" << endl;
+        // cout << "init kernel" << endl;
         DMA dma(DMA_BASE);
-        cout << "init DMA" << endl;
+        // cout << "init DMA" << endl;
 
         int height = image.rows;
         int width = image.cols;
@@ -1213,7 +1220,7 @@ namespace ORB_SLAM3
         {
             int height_new = height * mvInvScaleFactor[level];
             int width_new = width * mvInvScaleFactor[level];
-            cout << dec << "level: " << level << ", size: " << height_new << " x " << width_new << endl;
+            // cout << dec << "level: " << level << ", size: " << height_new << " x " << width_new << endl;
             
             dma.sendchannel.transfer(&inBuffer);
             dma.recvchannel.transfer(&outBuffer);
@@ -1226,7 +1233,7 @@ namespace ORB_SLAM3
             dma.sendchannel.wait();
             dma.recvchannel.wait();
             int nkeypointsReturn = kernel.read(ORB_RETURN);
-            cout << dec << "number of freatures extracted: " << nkeypointsReturn << endl;
+            // cout << dec << "number of freatures extracted: " << nkeypointsReturn << endl;
 
             int nkeypointsLevel = nkeypointsReturn;
             if (nkeypointsLevel > mnFeaturesPerLevel[level]) {
@@ -1238,90 +1245,81 @@ namespace ORB_SLAM3
             if(nkeypointsLevel==0)
                 continue;
             
-            vector<KeyPoint>& keypoints = allKeypoints[level];
-            keypoints.resize(nkeypointsLevel);
+            vector<DescOut>& outputsLevel = allOutputs[level];
+            outputsLevel.resize(nkeypointsReturn);
 
-            vector<uint8_t>& descLevel = allDescriptors[level];
-            descLevel.resize(nkeypointsLevel * 32);
-            int idesc = 0;
-
-            for (int ikp = 0; ikp < nkeypointsLevel; ikp++) {
+            for (int ikp = 0; ikp < nkeypointsReturn; ikp++) {
                 unsigned x, y;
-                unsigned x_high = outBuffer.ptr[ikp*OUTPUT_BYTES + 35];
-                unsigned x_low = outBuffer.ptr[ikp*OUTPUT_BYTES + 34];
-                unsigned y_high = outBuffer.ptr[ikp*OUTPUT_BYTES + 33];
-                unsigned y_low = outBuffer.ptr[ikp*OUTPUT_BYTES + 32];
+                unsigned x_high = outBuffer.ptr[ikp*OUTPUT_BYTES + 36];
+                unsigned x_low = outBuffer.ptr[ikp*OUTPUT_BYTES + 35];
+                unsigned y_high = outBuffer.ptr[ikp*OUTPUT_BYTES + 34];
+                unsigned y_low = outBuffer.ptr[ikp*OUTPUT_BYTES + 33];
+                float response = outBuffer.ptr[ikp*OUTPUT_BYTES + 32];
                 x = ((x_high << 8 & 0xFF00) | (x_low & 0x00FF));
                 y = ((y_high << 8 & 0xFF00) | (y_low & 0x00FF));
-                keypoints[ikp].pt.x = x;
-                keypoints[ikp].pt.y = y;
+                outputsLevel[ikp].kp.pt.x = x;
+                outputsLevel[ikp].kp.pt.y = y;
+                outputsLevel[ikp].kp.response = response;
+                outputsLevel[ikp].kp.octave = level;
+                outputsLevel[ikp].kp.angle = 0;
+                outputsLevel[ikp].kp.size = PATCH_SIZE*mvScaleFactor[level];
                 for (int k = 0; k < 32; k++) {
-                    descLevel[idesc] = (outBuffer.ptr[ikp*OUTPUT_BYTES + k]);
-                    idesc ++;
+                    outputsLevel[ikp].descriptor[k] = outBuffer.ptr[ikp*OUTPUT_BYTES + k];
                 }
             }
+
+            sort_heap(outputsLevel.begin(), outputsLevel.end(), compareResponse);
         }
 
-        cout << "ORB end" << endl;
-
+        Mat descriptors;
         if( nkeypoints == 0 )
             _descriptors.release();
-        else
-        {
+        else {
             _keypoints = vector<cv::KeyPoint>(nkeypoints);
             _descriptors.create(nkeypoints, 32, CV_8U);
             descriptors = _descriptors.getMat();
         }
         
-        for (int level = 0; level < nlevels; ++level)
-        {
-            vector<uint8_t>& descLevel = allDescriptors[level];
-            int levelSize = descLevel.size();
-            Mat desc = cv::Mat(levelSize, 32, CV_8U);
-            for (int i = 0; i < levelSize; i++) {
-                for (int j = 0; j < 32; j++) {
-                    desc.at<uint8_t>(i, j) = descLevel[i*levelSize + j];
-                }
+        int offset = 0;
+        for (int level = 0; level < nlevels; ++level) {
+            vector<DescOut>& outputsLevel = allOutputs[level];
+            int nkeypointsLevel = outputsLevel.size();
+            if (nkeypointsLevel > mnFeaturesPerLevel[level]) {
+                nkeypointsLevel = mnFeaturesPerLevel[level];
             }
-            cout << "read desc" << endl;
-            float scale = mvScaleFactor[level]; //getScale(level, firstLevel, scaleFactor);
-            int i = 0;
-            vector<KeyPoint>& keypoints = allKeypoints[level];
+
+            Mat desc = descriptors.rowRange(offset, offset + nkeypointsLevel);
+            desc = Mat::zeros(nkeypointsLevel, 32, CV_8UC1);
             KeyPoint keypoint;
-            for (int ikp = 0; i < keypoints.size(); i++) {
+            float scale = mvScaleFactor[level];
+            for (int ikp = 0; ikp < nkeypointsLevel; ikp++) {
                 // Scale keypoint coordinates
-                keypoint = keypoints[ikp];
+                keypoint = outputsLevel[ikp].kp;
                 keypoint.pt *= scale;
-                keypoint.size = PATCH_SIZE*mvScaleFactor[level];
-                keypoint.angle = 0;
-                keypoint.response = 40;
-                keypoint.octave = level;
-                cout << "scale keypoint" << endl;
                 if(keypoint.pt.x >= vLappingArea[0] && keypoint.pt.x <= vLappingArea[1]){
                     _keypoints[stereoIndex] = keypoint;
-                    desc.row(i).copyTo(descriptors.row(stereoIndex));
+                    for (int b = 0; b < 32; b++) {
+                        desc.ptr(ikp)[b] = outputsLevel[ikp].descriptor[b];
+                    }
                     stereoIndex--;
-                    cout << "stereoIndex" << endl;
-                }
-                else{
+                } else {
                     _keypoints[monoIndex] = keypoint;
-                    desc.row(i).copyTo(descriptors.row(monoIndex));
+                    for (int b = 0; b < 32; b++) {
+                        desc.ptr(ikp)[b] = outputsLevel[ikp].descriptor[b];
+                    }
                     monoIndex++;
-                    cout << "monoIndex" << endl;
                 }
-                
-                i++;
-            }
-        }
+            } // for level keypoints
+            offset += nkeypointsLevel;
+        } // for levels
         inBuffer.free();
         outBuffer.free();
         dma.close();
         kernel.close();
-        cout << "[ORBextractor]: extracted " << _keypoints.size() << " KeyPoints" << endl;
+        // cout << "[ORBextractor]: extracted " << _keypoints.size() << " KeyPoints" << endl;
         return monoIndex;
     }
 #endif
-
 
     void ORBextractor::ComputePyramid(cv::Mat image)
     {
