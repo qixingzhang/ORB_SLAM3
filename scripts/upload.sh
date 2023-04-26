@@ -1,3 +1,5 @@
+scp -P 16922 scripts/rgbd_tum.sh xilinx@10.19.129.51:/home/xilinx/ORB_SLAM3/scripts/rgbd_tum.sh
+scp -P 16922 scripts/evo.sh xilinx@10.19.129.51:/home/xilinx/ORB_SLAM3/scripts/evo.sh
 scp -P 16922 Examples/RGB-D/rgbd_tum xilinx@10.19.129.51:/home/xilinx/ORB_SLAM3/Examples/RGB-D/rgbd_tum
 scp -P 16922 lib/libORB_SLAM3.so xilinx@10.19.129.51:/home/xilinx/ORB_SLAM3/lib/libORB_SLAM3.so
 scp -P 16922 Thirdparty/DBoW2/lib/libDBoW2.so xilinx@10.19.129.51:/home/xilinx/ORB_SLAM3/Thirdparty/DBoW2/lib/libDBoW2.so

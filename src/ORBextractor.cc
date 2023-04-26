@@ -61,11 +61,7 @@
 #include <algorithm>
 
 #include "ORBextractor.h"
-
-// #define _SOFTWARE_
-#ifndef _SOFTWARE_
-    #include "ORBAccel.h"
-#endif
+#include "ORBAccel.h"
 
 using namespace cv;
 using namespace std;
@@ -1228,7 +1224,7 @@ namespace ORB_SLAM3
             kernel.write(ORB_WIDTH, width);
             kernel.write(ORB_HEIGHT_NEW, height_new);
             kernel.write(ORB_WIDTH_NEW, width_new);
-            kernel.write(ORB_THRESHOLD, 40);
+            kernel.write(ORB_THRESHOLD, iniThFAST);
             kernel.write(ORB_START, 0x1);
             dma.sendchannel.wait();
             dma.recvchannel.wait();

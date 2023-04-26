@@ -34,7 +34,7 @@
 
 echo "Configuring and building ORB_SLAM3 ..."
 
-mkdir build
+mkdir -p build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../aarch64.cmake
-make
+make -j4
