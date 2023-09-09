@@ -9,8 +9,8 @@ MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DREGISTER_TIMES")
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_SOFTWARE_")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DREGISTER_TIMES")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_SOFTWARE_")
 add_definitions(-w)
 
 set(CMAKE_CXX_STANDARD 14)
@@ -121,7 +121,7 @@ add_executable(rgbd_tum
 target_link_libraries(rgbd_tum ${PROJECT_NAME})
 
 
-# RGB-D inertial examples
+# # RGB-D inertial examples
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/RGB-D-Inertial)
 
 # if(realsense2_FOUND)
@@ -130,7 +130,7 @@ target_link_libraries(rgbd_tum ${PROJECT_NAME})
 #     target_link_libraries(rgbd_inertial_realsense_D435i ${PROJECT_NAME})
 # endif()
 
-#Stereo examples
+# # Stereo examples
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo)
 
 # add_executable(stereo_kitti
@@ -155,7 +155,7 @@ target_link_libraries(rgbd_tum ${PROJECT_NAME})
 #     target_link_libraries(stereo_realsense_D435i ${PROJECT_NAME})
 # endif()
 
-#Monocular examples
+# # Monocular examples
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular)
 
 # add_executable(mono_tum
@@ -184,7 +184,7 @@ target_link_libraries(rgbd_tum ${PROJECT_NAME})
 #     target_link_libraries(mono_realsense_D435i ${PROJECT_NAME})
 # endif()
 
-#Monocular inertial examples
+# # Monocular inertial examples
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular-Inertial)
 
 # add_executable(mono_inertial_euroc
@@ -205,7 +205,7 @@ target_link_libraries(rgbd_tum ${PROJECT_NAME})
 #     target_link_libraries(mono_inertial_realsense_D435i ${PROJECT_NAME})
 # endif()
 
-#Stereo Inertial examples
+# # Stereo Inertial examples
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo-Inertial)
 
 # add_executable(stereo_inertial_euroc
