@@ -29,4 +29,4 @@ Cross-compile ORB_SLAM3 for ZCU104 with Pangolin removed.
 1. Install OpenCV-4.4.0.
 1. Clone this repository to the board.
 1. Upload and replace the `lib`, `Thirdparty`, and `Examples` folders with the newly built one.
-1. Follow the [instruction](README_ORB_SLAM3) by ORB_SLAM3 to run the examples.
+1. Follow the [instruction](README_ORB_SLAM3.md) by ORB_SLAM3 to run the examples.
